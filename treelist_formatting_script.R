@@ -1,9 +1,10 @@
 #This script will help convert the treelists into the format expected by the QUIC-Fire Script
 
 library(readxl)
+library(writexl)
 library(tidyverse)
+library(dplyr)
 
-#Testing
 #This is the script to see changes for one csv at a time
   
   #prepares JZ treelist to appropriate format
@@ -16,7 +17,7 @@ csv_ready <- unite(crown_vars, x, x, y, dbh, ht, cbh, cr,  sep = " ")
 write.table(csv_ready, paste("C:\\Users\\neyja\\OneDrive - Colostate\\Documents\\GitHub\\treelist_formatting\\output_prerun1treelist.csv"),
             row.names = FALSE, col.names = FALSE, quote = FALSE)
 
-  #Pulls, max, min, and mean of treelist and writes table
+  #Pulls, max, min, and mean of treelist and writes csv
 
 find_max <- sapply(crown_vars, max)
 max <- data.frame(t(find_max))
@@ -28,8 +29,9 @@ treelist_upper <- max %>%
   full_join(mean, by = c("x", "y", "dbh", "ht", "cbh", "cr"))
 treelist_sum <- treelist_upper %>%
   full_join(min, by = c("x", "y", "dbh", "ht", "cbh", "cr"))
-write.table(treelist_sum, paste("C:\\Users\\neyja\\OneDrive - Colostate\\Documents\\GitHub\\treelist_formatting\\summary_prerun1treelist.csv"), 
-            row.names = FALSE, col.names = TRUE, quote = FALSE)
+#metric <- c("Max", "Mean", "Min")
+#summary_treelist <- cbind(treelist_sum, metric)
+write_csv(treelist_sum, paste("C:\\Users\\neyja\\data_desktop\\summary_prerun1treelist.csv"))
 
 #This is the batch process to run for an entire directory
 
@@ -55,6 +57,30 @@ for( i in raw_files )
     full_join(mean, by = c("x", "y", "dbh", "ht", "cbh", "cr"))
   treelist_sum <- treelist_upper %>%
     full_join(min, by = c("x", "y", "dbh", "ht", "cbh", "cr"))
-  write.table(treelist_sum, paste("C:\\Users\\neyja\\data_desktop\\fomatted_treelists\\preruns\\summaries\\summary_", i, sep = " "), 
-              row.names = FALSE, col.names = TRUE, quote = FALSE)
+#  metric <- c("Max", "Mean", "Min")
+#  summary_treelist <- cbind(treelist_sum, metric)
+  write_csv(treelist_sum, paste("C:\\Users\\neyja\\data_desktop\\fomatted_treelists\\preruns\\summaries\\summary_", i, sep = " "))
 }
+
+#This is the batch process to summarize summaries for overall domain specs
+
+library(data.table)
+setwd("C:\\Users\\neyja\\data_desktop\\fomatted_treelists\\preruns\\summaries")
+summary_files  <- list.files(pattern = '.+\\.csv$')
+summary_combined <- rbindlist(lapply(summary_files, fread))
+
+  #Makes overall summary csv
+
+find_max <- sapply(summary_combined, max)
+max <- data.frame(t(find_max))
+find_min <- sapply(summary_combined, min)
+min <- data.frame(t(find_min))
+find_mean <- sapply(summary_combined, mean)
+mean <- data.frame(t(find_mean))
+treelist_upper <- max %>%
+  full_join(mean, by = c("x", "y", "dbh", "ht", "cbh", "cr"))
+treelist_sum <- treelist_upper %>%
+  full_join(min, by = c("x", "y", "dbh", "ht", "cbh", "cr"))
+metric <- c("Max", "Mean", "Min")
+grand_summary <- cbind(treelist_sum, metric)
+write_csv(grand_summary, paste("C:\\Users\\neyja\\data_desktop\\grand_summary.csv"))
