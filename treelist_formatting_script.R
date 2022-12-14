@@ -36,10 +36,9 @@ raw_files <- Sys.glob( "*.csv" )
 for( i in raw_files )
 {
   OG_data <- read.csv( i )
-  crown <- filter(OG_data, output == ".TRUE.")
-  crown_measures <- mutate(crown, cr = cw / 2, dbh = 0, x_new = x - 500)
-  crown_vars <- subset(crown_measures, select = c(x_new, y, dbh, ht, cbh, cr))
-  csv_ready <- unite(crown_vars, x.y.dbh.ht.cbh.cr, x_new, y, dbh, ht, cbh, cr,  sep = " ")
+  measures <- mutate(OG_data, cr = cw / 2, dbh = 0)
+  crown_vars <- subset(measures, select = c(x, y, dbh, ht, cbh, cr))
+  csv_ready <- unite(crown_vars, x.y.dbh.ht.cbh.cr, x, y, dbh, ht, cbh, cr,  sep = " ")
   write.table(csv_ready, paste( "C:\\Users\\neyja\\data_desktop\\fomatted_treelists\\preruns\\outputs\\output_", i, sep = ""), 
         row.names = FALSE, col.names = FALSE, quote = FALSE)
  
@@ -50,9 +49,9 @@ for( i in raw_files )
   find_mean <- sapply(crown_vars, mean)
   mean <- data.frame(t(find_mean))
   treelist_upper <- max %>%
-    full_join(mean, by = c("x_new", "y", "dbh", "ht", "cbh", "cr"))
+    full_join(mean, by = c("x", "y", "dbh", "ht", "cbh", "cr"))
   treelist_sum <- treelist_upper %>%
-    full_join(min, by = c("x_new", "y", "dbh", "ht", "cbh", "cr"))
+    full_join(min, by = c("x", "y", "dbh", "ht", "cbh", "cr"))
   write_csv(treelist_sum, paste("C:\\Users\\neyja\\data_desktop\\fomatted_treelists\\preruns\\summaries\\summary_", i, sep = " "))
 }
 
@@ -72,9 +71,9 @@ min <- data.frame(t(find_min))
 find_mean <- sapply(summary_combined, mean)
 mean <- data.frame(t(find_mean))
 treelist_upper <- max %>%
-  full_join(mean, by = c("x_new", "y", "dbh", "ht", "cbh", "cr"))
+  full_join(mean, by = c("x", "y", "dbh", "ht", "cbh", "cr"))
 treelist_sum <- treelist_upper %>%
-  full_join(min, by = c("x_new", "y", "dbh", "ht", "cbh", "cr"))
+  full_join(min, by = c("x", "y", "dbh", "ht", "cbh", "cr"))
 metric <- c("Max", "Mean", "Min")
 grand_summary <- cbind(treelist_sum, metric)
 write_csv(grand_summary, paste("C:\\Users\\neyja\\data_desktop\\grand_summary.csv"))
