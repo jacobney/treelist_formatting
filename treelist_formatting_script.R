@@ -11,7 +11,7 @@ library(stringr)
   #prepares treelist from txt file for 56 dataset
 Txt <- read.delim("C:\\Users\\neyja\\OneDrive - Colostate\\Documents\\GitHub\\treelist_formatting\\Heil_pre_2ms.txt",
       col.names = "Lines")
-Tree_Lines <- Txt %>% filter(grepl('&TREE',Lines)) 
+Tree_Lines <- Txt %>% filter(grepl('LABEL=', Lines)) 
 sep_vars <- Tree_Lines %>% 
       separate(Lines, into = c("x", "y", "z", "PART_ID", "FUEL_GEOM", "cw", "cbh", "ht", "OUTPUT_TREE", "LABEL"), sep = ",")
 XYZ <- sep_vars %>%
@@ -24,17 +24,18 @@ TH <- CBH %>%
       mutate_at("ht", str_replace, "TREE_HEIGHT=", "")
 Trees_data <- TH %>%
       mutate_at("OUTPUT_TREE", str_replace, "OUTPUT_TREE=", "")
+  #go to AOI?
 relevant <- subset(Trees_data, select = c(x, y, cw, ht, cbh))
 numeric <- relevant %>% mutate_if(is.character, as.numeric)
 measures <- mutate(numeric, cr = cw / 2, dbh = 0)
-domain_treelist <- subset(measures, select = c(x, y, dbh, ht, cbh))
+domain_treelist <- subset(measures, select = c(x, y, dbh, ht, cbh, cr))
 csv_ready_56 <- unite(domain_treelist, x.y.dbh.ht.cbh.cr, x, y, dbh, ht, cbh, cr,  sep = " ")
 write.table(csv_ready_56, paste("C:\\Users\\neyja\\OneDrive - Colostate\\Documents\\GitHub\\treelist_formatting\\output_Heil_pre2.csv"),
             row.names = FALSE, col.names = FALSE, quote = FALSE)
 
   #241 dataset
-OG_data <- read.csv("C:\\Users\\neyja\\OneDrive - Colostate\\Documents\\GitHub\\treelist_formatting\\prerun1treelist.csv")
-measures <- mutate(OG_data, cr = cw / 2, dbh = 0)
+data_241 <- read.csv("C:\\Users\\neyja\\OneDrive - Colostate\\Documents\\GitHub\\treelist_formatting\\prerun1treelist.csv")
+measures <- mutate(data_241, cr = cw / 2, dbh = 0)
 domain_treelist <- subset(measures, select = c(x, y, dbh, ht, cbh, cr))
 csv_ready_241 <- unite(domain_treelist, x.y.dbh.ht.cbh.cr, x, y, dbh, ht, cbh, cr,  sep = " ")
 write.table(csv_ready, paste("C:\\Users\\neyja\\OneDrive - Colostate\\Documents\\GitHub\\treelist_formatting\\output_prerun1treelist.csv"),
@@ -42,20 +43,28 @@ write.table(csv_ready, paste("C:\\Users\\neyja\\OneDrive - Colostate\\Documents\
 
 ###Gets Summary Stats################################################################################
 
- #241 dataset has output == ".TRUE." and 36 hectares
+  #241 dataset has output == ".TRUE." and 36 hectares
 
- #filter to AOI 
+  #56 filter to AOI 
 AOI <- filter(Trees_data, OUTPUT_TREE == ".TRUE.")
-#AOI_crown_vars <- subset(AOI, select = c(x, y, dbh, ht, cbh, cr))
-AOI_trees <- count(AOI)
-domain_trees <- count(numeric)
+AOI_count <- count(AOI)
+domain_count <- count(domain_treelist)
+AOI_relevant <- subset(AOI, select = c(x, y, cw, ht, cbh))
+AOI_numeric <- relevant %>% mutate_if(is.character, as.numeric)
+AOI_measures <- mutate(AOI_numeric, cr = cw / 2, dbh = 0)
+AOI_treelist <- subset(AOI_measures, select = c(x, y, dbh, ht, cbh, cr))
+AOI_csv_ready_56 <- unite(AOI_treelist, x.y.dbh.ht.cbh.cr, x, y, dbh, ht, cbh, cr,  sep = " ")
 
   #get key params
 TPH <- domain_trees/40
-ninetieth_ht <- quantile(numeric$ht, probs = 0.9)
-nine_perc <- data.frame(ninetieth_ht)
-median_cbh <- quantile(numeric$cbh, probs = 0.5)
-med_cbh <- data.frame(t(median_cbh))
+ninetieth_HT <- quantile(domain_treelist$ht, probs = 0.9)
+nine_perc <- data.frame(ninetieth_HT)
+median_CBH <- quantile(domain_treelist$cbh, probs = 0.5)
+med_CBH <- data.frame(t(median_CBH))
+mean_CBH <- mean(domain_treelist$cbh)
+mn_CBH <- data.frame(t(mean_CBH))
+
+  #Below this needs work
 
   #Pulls, max, min, and median of AOI
 find_max <- sapply(crown_vars, max)
@@ -68,7 +77,8 @@ treelist_upper <- max %>%
   full_join(mean, by = c("x", "y", "dbh", "ht", "cbh", "cr"))
 treelist_sum <- treelist_upper %>%
   full_join(min, by = c("x", "y", "dbh", "ht", "cbh", "cr"))
-params <- mutate(treelist_sum, med_cbh = med_cbh, nine_perc = nine_perc, TPH = TPH)
+
+  #sum_stats <- mutate(mn_CBH, med_cbh = X50., nine_perc = nine_perc, TPH = TPH)
 
   #241 write summary CSV
 write_csv(params, paste("C:\\Users\\neyja\\data_desktop\\summary_prerun1treelist.csv"))
@@ -83,8 +93,8 @@ raw_files <- Sys.glob( "*.csv" )
 for( i in raw_files )
 {
   #Get dataframe
-  OG_data <- read.csv(i)
-  measures <- mutate(OG_data, cr = cw / 2, dbh = 0)
+  data_241 <- read.csv(i)
+  measures <- mutate(data_241, cr = cw / 2, dbh = 0)
   crown_vars <- subset(measures, select = c(x, y, dbh, ht, cbh, cr))
   csv_ready <- unite(crown_vars, x.y.dbh.ht.cbh.cr, x, y, dbh, ht, cbh, cr,  sep = " ")
   write.table(csv_ready, paste( "C:\\Users\\neyja\\data_desktop\\fomatted_treelists\\preruns\\outputs\\output_", i, sep = ""), 
@@ -119,7 +129,7 @@ for( i in raw_files )
               row.names = FALSE, col.names = FALSE, quote = FALSE)
 }
 
-###This is the batch process to summarize summaries for overall domain specs########################################################
+###This is the batch process to summarize 241 summaries for overall domain specs########################################################
 
 library(data.table)
 setwd("C:\\Users\\neyja\\data_desktop\\fomatted_treelists\\preruns\\summaries")
