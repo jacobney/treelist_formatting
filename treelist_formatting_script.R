@@ -8,9 +8,22 @@ library(stringr)
 
 ###Prepares Datasets################################################################################
   
-  #prepares treelist from txt file for 56 dataset
+  #241 cutting dataset
+data_241 <- read.csv("C:\\Users\\neyja\\OneDrive - Colostate\\Documents\\GitHub\\treelist_formatting\\prerun1treelist.csv")
+measures <- mutate(data_241, cr = cw / 2, dbh = 0)
+domain_treelist <- subset(measures, select = c(x, y, dbh, ht, cbh, cr))
+csv_ready_241 <- unite(domain_treelist, x.y.dbh.ht.cbh.cr, x, y, dbh, ht, cbh, cr,  sep = " ")
+write.table(csv_ready, paste("C:\\Users\\neyja\\OneDrive - Colostate\\Documents\\GitHub\\treelist_formatting\\output_prerun1treelist.csv"),
+            row.names = FALSE, col.names = FALSE, quote = FALSE) 
+
+  # 57 restoration txt file
 Txt <- read.delim("C:\\Users\\neyja\\OneDrive - Colostate\\Documents\\GitHub\\treelist_formatting\\Heil_pre_2ms.txt",
       col.names = "Lines")
+  # 36 sierra txt file
+Txt <- read.delim("C:\\Users\\neyja\\OneDrive - Colostate\\Documents\\GitHub\\treelist_formatting\\9_1929_6_het.txt",
+                  col.names = "Lines")
+
+  #prepares treelist from txt file
 Tree_Lines <- Txt %>% filter(grepl('LABEL=', Lines)) 
 sep_vars <- Tree_Lines %>% 
       separate(Lines, into = c("x", "y", "z", "PART_ID", "FUEL_GEOM", "cw", "cbh", "ht", "OUTPUT_TREE", "LABEL"), sep = ",")
@@ -29,16 +42,13 @@ relevant <- subset(Trees_data, select = c(x, y, cw, ht, cbh))
 numeric <- relevant %>% mutate_if(is.character, as.numeric)
 measures <- mutate(numeric, cr = cw / 2, dbh = 0)
 domain_treelist <- subset(measures, select = c(x, y, dbh, ht, cbh, cr))
-csv_ready_56 <- unite(domain_treelist, x.y.dbh.ht.cbh.cr, x, y, dbh, ht, cbh, cr,  sep = " ")
-write.table(csv_ready_56, paste("C:\\Users\\neyja\\OneDrive - Colostate\\Documents\\GitHub\\treelist_formatting\\output_Heil_pre2.csv"),
+csv_ready <- unite(domain_treelist, x.y.dbh.ht.cbh.cr, x, y, dbh, ht, cbh, cr,  sep = " ")
+  
+  #write 57 CSV
+write.table(csv_ready, paste("C:\\Users\\neyja\\OneDrive - Colostate\\Documents\\GitHub\\treelist_formatting\\output_Heil_pre2.csv"),
             row.names = FALSE, col.names = FALSE, quote = FALSE)
-
-  #241 dataset
-data_241 <- read.csv("C:\\Users\\neyja\\OneDrive - Colostate\\Documents\\GitHub\\treelist_formatting\\prerun1treelist.csv")
-measures <- mutate(data_241, cr = cw / 2, dbh = 0)
-domain_treelist <- subset(measures, select = c(x, y, dbh, ht, cbh, cr))
-csv_ready_241 <- unite(domain_treelist, x.y.dbh.ht.cbh.cr, x, y, dbh, ht, cbh, cr,  sep = " ")
-write.table(csv_ready, paste("C:\\Users\\neyja\\OneDrive - Colostate\\Documents\\GitHub\\treelist_formatting\\output_prerun1treelist.csv"),
+  #write 36 CSV
+write.table(csv_ready, paste("C:\\Users\\neyja\\OneDrive - Colostate\\Documents\\GitHub\\treelist_formatting\\output_9_1929_6_het.csv"),
             row.names = FALSE, col.names = FALSE, quote = FALSE)
 
 ###Gets Summary Stats################################################################################
@@ -85,30 +95,28 @@ write_csv(params, paste("C:\\Users\\neyja\\data_desktop\\summary_prerun1treelist
   #56 write summary CSV
 write_csv(params, paste("C:\\Users\\neyja\\OneDrive - Colostate\\Documents\\GitHub\\treelist_formatting\\summary_Heil_pre2.csv"))
 
-###This is the batch process to run for an entire directory##################################################################################
+###Batch process to create treelists from directory##################################################################################
 
-  #241 dataset
+  #241 cutting
 setwd("C:\\Users\\neyja\\data_desktop\\OG_treelist_csvs\\preruns")
 raw_files <- Sys.glob( "*.csv" )
 for( i in raw_files )
 {
-  #Get dataframe
   data_241 <- read.csv(i)
   measures <- mutate(data_241, cr = cw / 2, dbh = 0)
   crown_vars <- subset(measures, select = c(x, y, dbh, ht, cbh, cr))
   csv_ready <- unite(crown_vars, x.y.dbh.ht.cbh.cr, x, y, dbh, ht, cbh, cr,  sep = " ")
   write.table(csv_ready, paste( "C:\\Users\\neyja\\data_desktop\\fomatted_treelists\\preruns\\outputs\\output_", i, sep = ""), 
         row.names = FALSE, col.names = FALSE, quote = FALSE)
-  #write_csv(params, paste("C:\\Users\\neyja\\data_desktop\\fomatted_treelists\\preruns\\summaries\\summary_", i, sep = " "))
 }
 
-  #56 dataset
+  #57 restoration
 setwd("C:\\Users\\neyja\\data_desktop\\wfds_simulations\\57 restoration_sims\\restoration_sims_input_files")
 raw_files <- Sys.glob( "*.txt" )
 for( i in raw_files )
 {
   Txt <- read.delim(i, col.names = "Lines")
-  Tree_Lines <- Txt %>% filter(grepl('&TREE',Lines)) 
+  Tree_Lines <- Txt %>% filter(grepl('LABEL=',Lines)) 
   sep_vars <- Tree_Lines %>% 
     separate(Lines, into = c("x", "y", "z", "PART_ID", "FUEL_GEOM", "cw", "cbh", "ht", "OUTPUT_TREE", "LABEL"), sep = ",")
   XYZ <- sep_vars %>%
@@ -126,6 +134,33 @@ for( i in raw_files )
   domain <- subset(measures, select = c(x, y, dbh, ht, cbh, cr))
   csv_ready <- unite(domain, x.y.dbh.ht.cbh.cr, x, y, dbh, ht, cbh, cr,  sep = " ")
   write.table(csv_ready, paste( "C:\\Users\\neyja\\data_desktop\\wfds_simulations\\57 restoration_sims\\treelists\\output_", i, sep = ""), 
+              row.names = FALSE, col.names = FALSE, quote = FALSE)
+}
+
+#36 sierra
+setwd("C:\\Users\\neyja\\data_desktop\\wfds_simulations\\sierra_sims\\inputfiles")
+raw_files <- Sys.glob( "*.txt" )
+for( i in raw_files )
+{
+  Txt <- read.delim(i, col.names = "Lines")
+  Tree_Lines <- Txt %>% filter(grepl('LABEL=',Lines)) 
+  sep_vars <- Tree_Lines %>% 
+    separate(Lines, into = c("x", "y", "z", "PART_ID", "FUEL_GEOM", "cw", "cbh", "ht", "OUTPUT_TREE", "LABEL"), sep = ",")
+  XYZ <- sep_vars %>%
+    mutate_at("x", str_replace, "&TREE XYZ=", "")
+  CW <- XYZ %>%
+    mutate_at("cw", str_replace, "CROWN_WIDTH=", "")
+  CBH <- CW %>%
+    mutate_at("cbh", str_replace, "CROWN_BASE_HEIGHT=", "")
+  TH <- CBH %>%
+    mutate_at("ht", str_replace, "TREE_HEIGHT=", "")
+  Trees_data <- TH %>%
+    mutate_at("OUTPUT_TREE", str_replace, "OUTPUT_TREE=", "")
+  Trees_num <- transform(Trees_data, cw = as.numeric(cw))
+  measures <- mutate(Trees_num, cr = cw / 2, dbh = 0)
+  domain <- subset(measures, select = c(x, y, dbh, ht, cbh, cr))
+  csv_ready <- unite(domain, x.y.dbh.ht.cbh.cr, x, y, dbh, ht, cbh, cr,  sep = " ")
+  write.table(csv_ready, paste( "C:\\Users\\neyja\\data_desktop\\wfds_simulations\\sierra_sims\\treelists\\output_", i, sep = ""), 
               row.names = FALSE, col.names = FALSE, quote = FALSE)
 }
 
